@@ -193,7 +193,14 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
          if (wasEnded) {
             player.pause();
          } else {
-            player.play();
+            setTimeout(function (){
+               player.play();
+               if (document.visibilityState && document.visibilityState!='visible') {
+                  player.one('play', function(){
+                     player.pause();
+                  });
+               }
+            }, 0);
          }
          player.currentTime(currentTime || 0);
       });
