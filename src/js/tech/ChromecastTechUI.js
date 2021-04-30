@@ -25,18 +25,16 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
     */
    _createDOMElement: function() {
       var el = this._createElement('div', 'vjs-tech vjs-tech-chromecast'),
-          posterContainerEl = this._createElement('div', 'vjs-tech-chromecast-poster'),
-          posterImageEl = this._createElement('img', 'vjs-tech-chromecast-poster-img'),
-          titleEl = this._createElement('div', 'vjs-tech-chromecast-title'),
-          subtitleEl = this._createElement('div', 'vjs-tech-chromecast-subtitle'),
-          titleContainer = this._createElement('div', 'vjs-tech-chromecast-title-container');
+          coverEl = this._createElement('div', 'vjs-tech-chromecast-cover'),
+          iconEl = this._createElement('div', 'vjs-tech-chromecast-icon fab fa-chromecast'),
+          titleEl = this._createElement('div', 'vjs-tech-chromecast-title');
 
-      posterContainerEl.appendChild(posterImageEl);
-      titleContainer.appendChild(titleEl);
-      titleContainer.appendChild(subtitleEl);
-
-      el.appendChild(titleContainer);
-      el.appendChild(posterContainerEl);
+      iconEl.style="font-size: 8em; margin-top: 0.1em; z-index: 1;";
+      titleEl.style="font-size: 1.6em; z-index: 1;";
+      titleEl.innerHTML="S'està emetent";
+      el.appendChild(coverEl);
+      el.appendChild(iconEl);
+      el.appendChild(titleEl);
 
       return el;
    },
@@ -97,6 +95,16 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
    },
 
    /**
+    * Finds the image's DOMElement in the root UI element.
+    *
+    * @private
+    * @returns {DOMElement}
+    */
+   _findImageEl: function() {
+      return this._el.querySelector('.vjs-tech-chromecast-cover');
+   },
+
+   /**
     * Finds the subtitle's DOMElement in the root UI element.
     *
     * @private
@@ -148,6 +156,21 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
          titleEl.classList.remove('vjs-tech-chromecast-title-empty');
       } else {
          titleEl.classList.add('vjs-tech-chromecast-title-empty');
+      }
+   },
+
+   /**
+    * Sets the current image and updates the image's DOMElement with the new image.
+    *
+    * @param imageUrl {string} a imageUrl to show
+    */
+   updateCoverImage: function(imageUrl) {
+      var imageEl = this._findImageEl();
+
+      if (imageUrl) {
+         imageEl.style="width: 100%; height: 100%; position: absolute; background: url('"+imageUrl+"'); background-position: center; background-size: cover; filter: blur(5px) brightness(50%);";
+      } else {
+         imageEl.style="width: 100%; height: 100%; position: absolute; background: black;";
       }
    },
 

@@ -26,7 +26,7 @@ function configureCastContext(options) {
       // Setting autoJoinPolicy to ORIGIN_SCOPED prevents this plugin from automatically
       // trying to connect to a preexisting Chromecast session, if one exists. The user
       // must end any existing session before trying to cast from this player instance.
-      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+      autoJoinPolicy: chrome.cast.AutoJoinPolicy.PAGE_SCOPED,
    });
 }
 
@@ -38,7 +38,7 @@ function configureCastContext(options) {
  * @param player {object} a Video.js player instance
  */
 function onChromecastRequested(player) {
-   player.chromecastSessionManager.openCastMenu();
+   window.chromecastSessionManager.openCastMenu();
 }
 
 /**
@@ -75,8 +75,8 @@ function setUpChromecastButton(player, options) {
  * @param player {object} a Video.js player instance
  */
 function createSessionManager(player) {
-   if (!player.chromecastSessionManager) {
-      player.chromecastSessionManager = new ChromecastSessionManager(player);
+   if (!window.chromecastSessionManager) {
+      window.chromecastSessionManager = new ChromecastSessionManager(player);
    }
 }
 

@@ -40,10 +40,18 @@ ChromecastButton = {
       // Use the initial state of `hasAvailableDevices` to call the corresponding event
       // handlers because the corresponding events may have already been emitted before
       // binding the listeners above.
-      if (player.chromecastSessionManager && player.chromecastSessionManager.hasAvailableDevices()) {
+      if (window.chromecastSessionManager && window.chromecastSessionManager.hasAvailableDevices()) {
          this._onChromecastDevicesAvailable();
       } else {
          this._onChromecastDevicesUnavailable();
+      }
+
+      if (window.chrome && window.chrome.cast && window.cast && cast.framework.CastContext.getInstance().getCurrentSession() &&
+            (cast.framework.CastContext.getInstance().getCurrentSession().getSessionState()=='SESSION_STARTED' ||
+                  cast.framework.CastContext.getInstance().getCurrentSession().getSessionState()=='SESSION_RESUMED')) {
+         this._isChromecastConnected = true;
+         this._reloadCSSClasses();
+         player.addClass('vjs-casting');
       }
    },
 
@@ -79,6 +87,7 @@ ChromecastButton = {
    _onChromecastConnected: function() {
       this._isChromecastConnected = true;
       this._reloadCSSClasses();
+      this.player().addClass('vjs-casting');
    },
 
    /**
@@ -89,6 +98,7 @@ ChromecastButton = {
    _onChromecastDisconnected: function() {
       this._isChromecastConnected = false;
       this._reloadCSSClasses();
+      this.player().removeClass('vjs-casting');
    },
 
    /**

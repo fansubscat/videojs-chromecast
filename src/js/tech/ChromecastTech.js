@@ -36,12 +36,11 @@ ChromecastTech = {
       this._eventListeners = [];
 
       this.videojsPlayer = this.videojs(options.playerId);
-      this._chromecastSessionManager = this.videojsPlayer.chromecastSessionManager;
+      this._chromecastSessionManager = window.chromecastSessionManager;
 
       // We have to initialize the UI here, before calling super.constructor
       // because the constructor calls `createEl`, which references `this._ui`.
       this._ui = new ChromecastTechUI();
-      this._ui.updatePoster(this.videojsPlayer.poster());
 
       // Call the super class' constructor function
       subclass = this.constructor.super_.apply(this, arguments);
@@ -54,6 +53,7 @@ ChromecastTech = {
       this._hasPlayedAnyItem = false;
       this._requestTitle = options.requestTitleFn || _.noop;
       this._requestSubtitle = options.requestSubtitleFn || _.noop;
+      this._requestCoverImageUrl = options.requestCoverImageUrlFn || _.noop;
       this._requestCustomData = options.requestCustomDataFn || _.noop;
       // See `currentTime` function
       this._initialStartTime = options.startTime || 0;
@@ -84,6 +84,10 @@ ChromecastTech = {
     * @see {@link http://docs.videojs.com/Player.html#play}
     */
    play: function() {
+      if ($('.vjs-ended').length>0) { //UGLY HACK
+         this._playSource({ src: this.videojsPlayer.src() }, 0);
+         return;
+      }
       if (!this.paused()) {
          return;
       }
@@ -157,16 +161,20 @@ ChromecastTech = {
           mediaInfo = new chrome.cast.media.MediaInfo(source.src, source.type),
           title = this._requestTitle(source),
           subtitle = this._requestSubtitle(source),
+          imageUrl = this._requestCoverImageUrl(source),
           customData = this._requestCustomData(source),
           request;
 
       this.trigger('waiting');
-      this._clearSessionTimeout();
+      //this._clearSessionTimeout(); //Disabled for now
 
       mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
       mediaInfo.metadata.metadataType = chrome.cast.media.MetadataType.GENERIC;
       mediaInfo.metadata.title = title;
       mediaInfo.metadata.subtitle = subtitle;
+      mediaInfo.metadata.images = [{
+         url: imageUrl
+      }];
       mediaInfo.streamType = this.videojsPlayer.liveTracker && this.videojsPlayer.liveTracker.isLive()
          ? chrome.cast.media.StreamType.LIVE
          : chrome.cast.media.StreamType.BUFFERED;
@@ -175,8 +183,9 @@ ChromecastTech = {
          mediaInfo.customData = customData;
       }
 
-      this._ui.updateTitle(title);
-      this._ui.updateSubtitle(subtitle);
+      this._ui.updateTitle((castSession && castSession.getCastDevice() && castSession.getCastDevice().friendlyName) ? "S'està emetent a "+castSession.getCastDevice().friendlyName : "S'està emetent");
+      //this._ui.updateSubtitle(subtitle);
+      this._ui.updateCoverImage(imageUrl);
 
       request = new chrome.cast.media.LoadRequest(mediaInfo);
       request.autoplay = true;
@@ -289,7 +298,8 @@ ChromecastTech = {
     * @see {@link http://docs.videojs.com/Player.html#volume}
     */
    volume: function() {
-      return this._remotePlayer.volumeLevel;
+      //return this._remotePlayer.volumeLevel;
+      return 1; //Disable for now
    },
 
    /**
@@ -301,8 +311,8 @@ ChromecastTech = {
     * @see {@link http://docs.videojs.com/Player.html#volume}
     */
    setVolume: function(volumeLevel) {
-      this._remotePlayer.volumeLevel = volumeLevel;
-      this._remotePlayerController.setVolumeLevel();
+      //this._remotePlayer.volumeLevel = volumeLevel;
+      //this._remotePlayerController.setVolumeLevel();
       // This event is triggered by the listener on
       // `RemotePlayerEventType.VOLUME_LEVEL_CHANGED`, but waiting for that event to fire
       // in response to calls to `setVolume` introduces noticeable lag in the updating of
@@ -352,7 +362,7 @@ ChromecastTech = {
     * @see {@link http://docs.videojs.com/Tech.html#setPoster}
     */
    setPoster: function(poster) {
-      this._ui.updatePoster(poster);
+      //this._ui.updatePoster(poster);
    },
 
    /**
@@ -592,7 +602,7 @@ ChromecastTech = {
          this.trigger('pause');
       } else if ((playerState === states.IDLE && this.ended()) || (playerState === null && this._hasPlayedCurrentItem)) {
          this._hasPlayedCurrentItem = false;
-         this._closeSessionOnTimeout();
+         //this._closeSessionOnTimeout();
          this.trigger('ended');
          this._triggerTimeUpdateEvent();
       } else if (playerState === states.BUFFERING) {
@@ -627,7 +637,7 @@ ChromecastTech = {
    _closeSessionOnTimeout: function() {
       // Ensure that there's never more than one session timeout active
       this._clearSessionTimeout();
-      this._sessionTimeoutID = setTimeout(function() {
+      window._chromecastSessionTimeoutID = setTimeout(function() {
          var castSession = this._getCastSession();
 
          if (castSession) {
@@ -645,9 +655,9 @@ ChromecastTech = {
     * @see _closeSessionOnTimeout
     */
    _clearSessionTimeout: function() {
-      if (this._sessionTimeoutID) {
-         clearTimeout(this._sessionTimeoutID);
-         this._sessionTimeoutID = false;
+      if (window._chromecastSessionTimeoutID) {
+         clearTimeout(window._chromecastSessionTimeoutID);
+         window._chromecastSessionTimeoutID = false;
       }
    },
 
@@ -740,7 +750,7 @@ module.exports = function(videojs) {
    ChromecastTechImpl.canPlaySource = ChromecastSessionManager.isChromecastConnected.bind(ChromecastSessionManager);
    ChromecastTechImpl.isSupported = ChromecastSessionManager.isChromecastConnected.bind(ChromecastSessionManager);
 
-   ChromecastTechImpl.prototype.featuresVolumeControl = true;
+   ChromecastTechImpl.prototype.featuresVolumeControl = false; //Changed
    ChromecastTechImpl.prototype.featuresPlaybackRate = false;
    ChromecastTechImpl.prototype.movingMediaElementInDOM = false;
    ChromecastTechImpl.prototype.featuresFullscreenResize = true;

@@ -11,6 +11,9 @@ function getCastContext() {
 
 ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prototype **/ {
 
+   sessionStateChangeListener: null,
+   castStateChangeListener: null,
+
    /**
     * Stores the state of the current Chromecast session and its associated objects such
     * as the
@@ -39,13 +42,7 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
     * @constructs ChromecastSessionManager
     */
    init: function(player) {
-      this.player = player;
-
       this._addCastContextEventListeners();
-
-      // Remove global event listeners when this player instance is destroyed to prevent
-      // memory leaks.
-      this.player.on('dispose', this._removeCastContextEventListeners.bind(this));
 
       this._notifyPlayerOfDevicesAvailabilityChange(this.getCastContext().getCastState());
 
@@ -62,8 +59,10 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
       var sessionStateChangedEvt = cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
           castStateChangedEvt = cast.framework.CastContextEventType.CAST_STATE_CHANGED;
 
-      this.getCastContext().addEventListener(sessionStateChangedEvt, this._onSessionStateChange.bind(this));
-      this.getCastContext().addEventListener(castStateChangedEvt, this._onCastStateChange.bind(this));
+      this.sessionStateChangeListener = this._onSessionStateChange.bind(this);
+      this.castStateChangeListener = this._onCastStateChange.bind(this);
+      this.getCastContext().addEventListener(sessionStateChangedEvt, this.sessionStateChangeListener);
+      this.getCastContext().addEventListener(castStateChangedEvt, this.castStateChangeListener);
    },
 
    /**
@@ -76,8 +75,8 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
       var sessionStateChangedEvt = cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
           castStateChangedEvt = cast.framework.CastContextEventType.CAST_STATE_CHANGED;
 
-      this.getCastContext().removeEventListener(sessionStateChangedEvt);
-      this.getCastContext().removeEventListener(castStateChangedEvt);
+      this.getCastContext().removeEventListener(sessionStateChangedEvt, this.sessionStateChangeListener);
+      this.getCastContext().removeEventListener(castStateChangedEvt, this.castStateChangeListener);
    },
 
    /**
@@ -87,8 +86,26 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
     */
    _onSessionStateChange: function(event) {
       if (event.sessionState === cast.framework.SessionState.SESSION_ENDED) {
-         this.player.trigger('chromecastDisconnected');
-         this._reloadTech();
+         if (window.player && window.currentMethod!='mega' && window.currentMethod!='youtube') {
+            window.player.trigger('chromecastDisconnected');
+            this._reloadTech();
+         }
+      } else if (event.sessionState === cast.framework.SessionState.SESSION_STARTED || event.sessionState === cast.framework.SessionState.SESSION_RESUMED) {
+         if (window.player) {
+            if (!window.player.currentSource() || window.currentMethod=='mega' || window.currentMethod=='youtube') {
+               // Do not cast if there is no media item loaded in the player
+               if (window.currentMethod=='mega') {
+                  alert("Els vídeos acabats de penjar estan allotjats a MEGA i no es poden emetre. Si vols emetre'l, caldrà que esperis un parell d'hores i refresquis la pàgina.");
+               } else {
+                  alert("Aquest vídeo no es pot emetre.");
+               }
+               cast.framework.CastContext.getInstance().endCurrentSession(true);
+               return;
+            }
+            window.player.trigger('chromecastConnected');
+            this._reloadTech();
+         }
+         hasConnected = true;
       }
    },
 
@@ -108,10 +125,12 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
     * @private
     */
    _notifyPlayerOfDevicesAvailabilityChange: function(castState) {
-      if (this.hasAvailableDevices(castState)) {
-         this.player.trigger('chromecastDevicesAvailable');
-      } else {
-         this.player.trigger('chromecastDevicesUnavailable');
+      if (window.player) {
+         if (this.hasAvailableDevices(castState)) {
+            window.player.trigger('chromecastDevicesAvailable');
+         } else {
+            window.player.trigger('chromecastDevicesUnavailable');
+         }
       }
    },
 
@@ -135,18 +154,6 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
     * Video.js player does not have a source.
     */
    openCastMenu: function() {
-      var onSessionSuccess;
-
-      if (!this.player.currentSource()) {
-         // Do not cast if there is no media item loaded in the player
-         return;
-      }
-      onSessionSuccess = function() {
-         hasConnected = true;
-         this.player.trigger('chromecastConnected');
-         this._reloadTech();
-      }.bind(this);
-
       // It is the `requestSession` function call that actually causes the cast menu to
       // open.
       // The second parameter to `.then` is an error handler. We use _.noop here
@@ -155,7 +162,7 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
       // the user closes out of the chromecast selector pop-up without choosing a
       // casting destination.
       this.getCastContext().requestSession()
-         .then(onSessionSuccess, _.noop);
+         .then(_.noop, _.noop);
    },
 
    /**
@@ -169,9 +176,10 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
     * @private
     */
    _reloadTech: function() {
-      var player = this.player,
+      var player = window.player,
           currentTime = player.currentTime(),
           wasPaused = player.paused(),
+          wasEnded = player.ended(),
           sources = player.currentSources();
 
       // Reload the current source(s) to re-lookup and use the currently available Tech.
@@ -182,7 +190,7 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
       player.src(sources);
 
       player.ready(function() {
-         if (wasPaused) {
+         if (wasEnded) {
             player.pause();
          } else {
             player.play();
