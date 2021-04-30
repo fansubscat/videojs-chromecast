@@ -95,9 +95,9 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
             if (!window.player.currentSource() || window.currentMethod=='mega' || window.currentMethod=='youtube') {
                // Do not cast if there is no media item loaded in the player
                if (window.currentMethod=='mega') {
-                  alert("Els vídeos acabats de penjar estan allotjats a MEGA i no es poden emetre. Si vols emetre'l, caldrà que esperis un parell d'hores i refresquis la pàgina.");
+                  showAlert("No es pot emetre", "Els vídeos acabats de penjar estan allotjats a MEGA i no es poden emetre. Si vols emetre'l, caldrà que esperis un parell d'hores i refresquis la pàgina.");
                } else {
-                  alert("Aquest vídeo no es pot emetre.");
+                  showAlert("No es pot emetre", "Aquest vídeo no es pot emetre.");
                }
                cast.framework.CastContext.getInstance().endCurrentSession(true);
                return;
