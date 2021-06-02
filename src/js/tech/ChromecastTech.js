@@ -95,7 +95,11 @@ ChromecastTech = {
          // Restart the current item from the beginning
          this._playSource({ src: this.videojsPlayer.src() }, 0);
       } else {
-         this._remotePlayerController.playOrPause();
+      try {
+            this._remotePlayerController.playOrPause();
+         } catch (error) {
+            this._killChromecastSessionDueToError("playOrPause failed due to cast session error, reverting to normal player");
+         }
       }
    },
 
@@ -107,7 +111,11 @@ ChromecastTech = {
     */
    pause: function() {
       if (!this.paused() && this._remotePlayer.canPause) {
-         this._remotePlayerController.playOrPause();
+         try {
+            this._remotePlayerController.playOrPause();
+         } catch (error) {
+            this._killChromecastSessionDueToError("playOrPause failed due to cast session error, reverting to normal player");
+         }
       }
    },
 
@@ -193,21 +201,32 @@ ChromecastTech = {
 
       this._isMediaLoading = true;
       this._hasPlayedCurrentItem = false;
-      castSession.loadMedia(request)
-         .then(function() {
-            if (!this._hasPlayedAnyItem) {
-               // `triggerReady` is required here to notify the Video.js player that the
-               // Tech has been initialized and is ready.
-               this.triggerReady();
-            }
-            this.trigger('loadstart');
-            this.trigger('loadeddata');
-            this.trigger('play');
-            this.trigger('playing');
-            this._hasPlayedAnyItem = true;
-            this._isMediaLoading = false;
-            this._getMediaSession().addUpdateListener(this._onMediaSessionStatusChanged.bind(this));
-         }.bind(this), this._triggerErrorEvent.bind(this));
+      try {
+         castSession.loadMedia(request)
+            .then(function() {
+               if (!this._hasPlayedAnyItem) {
+                  // `triggerReady` is required here to notify the Video.js player that the
+                  // Tech has been initialized and is ready.
+                  this.triggerReady();
+               }
+               this.trigger('loadstart');
+               this.trigger('loadeddata');
+               this.trigger('play');
+               this.trigger('playing');
+               this._hasPlayedAnyItem = true;
+               this._isMediaLoading = false;
+               this._getMediaSession().addUpdateListener(this._onMediaSessionStatusChanged.bind(this));
+            }.bind(this), this._triggerErrorEvent.bind(this));
+      } catch (error) {
+         this._killChromecastSessionDueToError("loadMedia failed due to cast session error, reverting to normal player");
+      }
+   },
+
+   _killChromecastSessionDueToError: function(message) {
+      console.log(message);
+      window.isChromecastDead=true;
+      window.player.trigger('chromecastDisconnected');
+      this._chromecastSessionManager._reloadTech();
    },
 
    /**
@@ -228,8 +247,13 @@ ChromecastTech = {
       // causes the Video.js player to get stuck in a BUFFERING state. To work around
       // this, we only allow seeking to within 1 second of the end of an item.
       this._remotePlayer.currentTime = Math.min(duration - 1, time);
-      this._remotePlayerController.seek();
-      this._triggerTimeUpdateEvent();
+
+      try {
+         this._remotePlayerController.seek();
+         this._triggerTimeUpdateEvent();
+      } catch (error) {
+         this._killChromecastSessionDueToError("seek failed due to cast session error, reverting to normal player");
+      }
    },
 
    /**
@@ -340,7 +364,11 @@ ChromecastTech = {
     */
    setMuted: function(isMuted) {
       if ((this._remotePlayer.isMuted && !isMuted) || (!this._remotePlayer.isMuted && isMuted)) {
-         this._remotePlayerController.muteOrUnmute();
+         try {
+            this._remotePlayerController.muteOrUnmute();
+         } catch (error) {
+            this._killChromecastSessionDueToError("muteOrUnmute failed due to cast session error, reverting to normal player");
+         }
       }
    },
 

@@ -48,7 +48,7 @@ ChromecastButton = {
 
       if (window.chrome && window.chrome.cast && window.cast && cast.framework.CastContext.getInstance().getCurrentSession() &&
             (cast.framework.CastContext.getInstance().getCurrentSession().getSessionState()=='SESSION_STARTED' ||
-                  cast.framework.CastContext.getInstance().getCurrentSession().getSessionState()=='SESSION_RESUMED')) {
+                  cast.framework.CastContext.getInstance().getCurrentSession().getSessionState()=='SESSION_RESUMED') && !window.isChromecastDead) {
          this._isChromecastConnected = true;
          this._reloadCSSClasses();
          player.addClass('vjs-casting');

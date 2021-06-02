@@ -38,7 +38,11 @@ function configureCastContext(options) {
  * @param player {object} a Video.js player instance
  */
 function onChromecastRequested(player) {
-   window.chromecastSessionManager.openCastMenu();
+   if (!window.isChromecastDead) {
+      window.chromecastSessionManager.openCastMenu();
+   } else {
+      showAlert("Error en emetre", "El navegador ha estat en segon pla massa temps i, a causa d'una limitació del sistema de Google Cast, s'ha perdut la connexió amb el dispositiu al qual s'emetia. Pots continuar-lo controlant amb els controls del mòbil, però si el vols controlar des d'aquí o mirar-hi un altre vídeo, cal que actualitzis la pàgina.", true);
+   }
 }
 
 /**

@@ -190,19 +190,29 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
       player.src(sources);
 
       player.ready(function() {
-         if (wasEnded) {
+         if (window.isChromecastDead) {
+            showAlert("Error en emetre", "El navegador ha estat en segon pla massa temps i, a causa d'una limitació del sistema de Google Cast, s'ha perdut la connexió amb el dispositiu al qual s'emetia. Pots continuar-lo controlant amb els controls del mòbil, però si el vols controlar des d'aquí o mirar-hi un altre vídeo, cal que actualitzis la pàgina.", true);
             player.pause();
-         } else {
+            //Purely a visual change:
             setTimeout(function (){
-               player.play();
-               if (document.visibilityState && document.visibilityState!='visible') {
-                  player.one('play', function(){
-                     player.pause();
-                  });
-               }
-            }, 0);
+               player.addClass('vjs-has-started');
+            }, 100);
          }
-         player.currentTime(currentTime || 0);
+         else {
+            if (wasEnded) {
+               player.pause();
+            } else {
+               setTimeout(function (){
+                  player.play();
+                  if (document.visibilityState && document.visibilityState!='visible') {
+                     player.one('play', function(){
+                        player.pause();
+                     });
+                  }
+               }, 0);
+            }
+            player.currentTime(currentTime || 0);
+         }
       });
    },
 
@@ -253,7 +263,7 @@ ChromecastSessionManager.isChromecastConnected = function() {
    // session was initiated by another tab in the browser or by another process.
    return ChromecastSessionManager.isChromecastAPIAvailable() &&
       (getCastContext().getCastState() === cast.framework.CastState.CONNECTED) &&
-      hasConnected;
+      hasConnected && !window.isChromecastDead;
 };
 
 module.exports = ChromecastSessionManager;
