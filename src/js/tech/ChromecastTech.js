@@ -63,6 +63,8 @@ ChromecastTech = {
          this.setMuted(options.muted);
       }.bind(this));
 
+      this.reconnectRetryCount = 0;
+
       return subclass;
    },
 
@@ -95,10 +97,22 @@ ChromecastTech = {
          // Restart the current item from the beginning
          this._playSource({ src: this.videojsPlayer.src() }, 0);
       } else {
-      try {
+         try {
             this._remotePlayerController.playOrPause();
+            this.reconnectRetryCount = 0;
          } catch (error) {
-            this._killChromecastSessionDueToError("playOrPause failed due to cast session error, reverting to normal player");
+            //Retry
+            this.reconnectRetryCount++;
+            if (this.reconnectRetryCount>5) {
+              this._killChromecastSessionDueToError("playOrPause failed due to cast session error, reverting to normal player");
+            }
+            else {
+              this._reconnectChromecastSessionDueToError("playOrPause failed due to cast session error, reconnecting");
+               var that = this;
+               setTimeout(function(){
+                  that.play();
+                 }, 2000);
+            }
          }
       }
    },
@@ -113,8 +127,20 @@ ChromecastTech = {
       if (!this.paused() && this._remotePlayer.canPause) {
          try {
             this._remotePlayerController.playOrPause();
+            this.reconnectRetryCount = 0;
          } catch (error) {
-            this._killChromecastSessionDueToError("playOrPause failed due to cast session error, reverting to normal player");
+            //Retry
+            this.reconnectRetryCount++;
+            if (this.reconnectRetryCount>5) {
+              this._killChromecastSessionDueToError("playOrPause failed due to cast session error, reverting to normal player");
+            }
+            else {
+              this._reconnectChromecastSessionDueToError("playOrPause failed due to cast session error, reconnecting");
+               var that = this;
+               setTimeout(function(){
+                  that.pause();
+                 }, 2000);
+            }
          }
       }
    },
@@ -217,9 +243,27 @@ ChromecastTech = {
                this._isMediaLoading = false;
                this._getMediaSession().addUpdateListener(this._onMediaSessionStatusChanged.bind(this));
             }.bind(this), this._triggerErrorEvent.bind(this));
+        window.currentChromecastSessionId = castSession.getSessionId();
+        this.reconnectRetryCount = 0;
       } catch (error) {
-         this._killChromecastSessionDueToError("loadMedia failed due to cast session error, reverting to normal player");
+         //Retry
+         this.reconnectRetryCount++;
+         if (this.reconnectRetryCount>5) {
+           this._killChromecastSessionDueToError("loadMedia failed due to cast session error, reverting to normal player");
+         }
+         else {
+           this._reconnectChromecastSessionDueToError("loadMedia failed due to cast session error, reconnecting");
+            var that = this;
+            setTimeout(function(){
+               that._playSource(source, startTime);
+              }, 2000);
+         }
       }
+   },
+
+   _reconnectChromecastSessionDueToError: function(message) {
+     console.log("Reconnecting to Cast: "+message);
+     chrome.cast.requestSessionById(window.currentChromecastSessionId);
    },
 
    _killChromecastSessionDueToError: function(message) {
@@ -251,8 +295,20 @@ ChromecastTech = {
       try {
          this._remotePlayerController.seek();
          this._triggerTimeUpdateEvent();
+         this.reconnectRetryCount = 0;
       } catch (error) {
-         this._killChromecastSessionDueToError("seek failed due to cast session error, reverting to normal player");
+         //Retry
+         this.reconnectRetryCount++;
+         if (this.reconnectRetryCount>5) {
+           this._killChromecastSessionDueToError("seek failed due to cast session error, reverting to normal player");
+         }
+         else {
+           this._reconnectChromecastSessionDueToError("seek failed due to cast session error, reconnecting");
+            var that = this;
+            setTimeout(function(){
+               that.setCurrentTime(time);
+              }, 2000);
+         }
       }
    },
 
@@ -366,8 +422,20 @@ ChromecastTech = {
       if ((this._remotePlayer.isMuted && !isMuted) || (!this._remotePlayer.isMuted && isMuted)) {
          try {
             this._remotePlayerController.muteOrUnmute();
+            this.reconnectRetryCount = 0;
          } catch (error) {
-            this._killChromecastSessionDueToError("muteOrUnmute failed due to cast session error, reverting to normal player");
+            //Retry
+            this.reconnectRetryCount++;
+            if (this.reconnectRetryCount>5) {
+              this._killChromecastSessionDueToError("muteOrUnmute failed due to cast session error, reverting to normal player");
+            }
+            else {
+              this._reconnectChromecastSessionDueToError("muteOrUnmute failed due to cast session error, reconnecting");
+               var that = this;
+               setTimeout(function(){
+                  that.setMuted(isMuted);
+                 }, 2000);
+            }
          }
       }
    },

@@ -191,7 +191,7 @@ ChromecastSessionManager = Class.extend(/** @lends ChromecastSessionManager.prot
 
       player.ready(function() {
          if (window.isChromecastDead) {
-            showAlert("Error en emetre", "El navegador ha estat en segon pla massa temps i, a causa d'una limitació del sistema de Google Cast, s'ha perdut la connexió amb el dispositiu al qual s'emetia. Pots continuar-lo controlant amb els controls del mòbil, però si el vols controlar des d'aquí o mirar-hi un altre vídeo, cal que actualitzis la pàgina.", true);
+            showAlert("Error en emetre", "S'ha perdut la connexió amb el dispositiu al qual s'emetia. Si vols continuar controlant el Chromecast des d'aquí o mirar-hi un altre vídeo, cal que actualitzis la pàgina.", true);
             player.pause();
             //Purely a visual change:
             setTimeout(function (){
