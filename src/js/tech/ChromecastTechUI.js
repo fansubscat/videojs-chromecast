@@ -1,8 +1,3 @@
-'use strict';
-
-var Class = require('class.extend'),
-    ChromecastTechUI;
-
 /**
  * This class represents the UI that is shown in the player while the Chromecast Tech is
  * active. The UI has a single root DOM element that displays the poster image of the
@@ -11,10 +6,10 @@ var Class = require('class.extend'),
  *
  * @class ChromecastTechUI
  */
-ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
-   init: function() {
+class ChromecastTechUI {
+   constructor() {
       this._el = this._createDOMElement();
-   },
+   }
 
    /**
     * Creates and returns a single DOMElement that contains the UI. This implementation
@@ -23,7 +18,7 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
     * @private
     * @returns {DOMElement}
     */
-   _createDOMElement: function() {
+   _createDOMElement() {
       var el = this._createElement('div', 'vjs-tech vjs-tech-chromecast'),
           coverEl = this._createElement('div', 'vjs-tech-chromecast-cover'),
           iconEl = this._createElement('div', 'vjs-tech-chromecast-icon fab fa-chromecast'),
@@ -37,7 +32,7 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
       el.appendChild(titleEl);
 
       return el;
-   },
+   }
 
    /**
     * A helper method for creating DOMElements of the given type and with the given class
@@ -48,21 +43,21 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
     * a space-delimited list of class names.
     * @returns {DOMElement}
     */
-   _createElement: function(type, className) {
+   _createElement(type, className) {
       var el = document.createElement(type);
 
       el.className = className;
       return el;
-   },
+   }
 
    /**
     * Gets the root DOMElement to be shown in the player's UI.
     *
     * @returns {DOMElement}
     */
-   getDOMElement: function() {
+   getDOMElement() {
       return this._el;
-   },
+   }
 
    /**
     * Finds the poster's DOMElement in the root UI element.
@@ -70,9 +65,9 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
     * @private
     * @returns {DOMElement}
     */
-   _findPosterEl: function() {
+   _findPosterEl() {
       return this._el.querySelector('.vjs-tech-chromecast-poster');
-   },
+   }
 
    /**
     * Finds the poster's <img> DOMElement in the root UI element.
@@ -80,9 +75,9 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
     * @private
     * @returns {DOMElement}
     */
-   _findPosterImageEl: function() {
+   _findPosterImageEl() {
       return this._el.querySelector('.vjs-tech-chromecast-poster-img');
-   },
+   }
 
    /**
     * Finds the title's DOMElement in the root UI element.
@@ -90,9 +85,9 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
     * @private
     * @returns {DOMElement}
     */
-   _findTitleEl: function() {
+   _findTitleEl() {
       return this._el.querySelector('.vjs-tech-chromecast-title');
-   },
+   }
 
    /**
     * Finds the image's DOMElement in the root UI element.
@@ -100,9 +95,9 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
     * @private
     * @returns {DOMElement}
     */
-   _findImageEl: function() {
+   _findImageEl() {
       return this._el.querySelector('.vjs-tech-chromecast-cover');
-   },
+   }
 
    /**
     * Finds the subtitle's DOMElement in the root UI element.
@@ -110,9 +105,9 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
     * @private
     * @returns {DOMElement}
     */
-   _findSubtitleEl: function() {
+   _findSubtitleEl() {
       return this._el.querySelector('.vjs-tech-chromecast-subtitle');
-   },
+   }
 
    /**
     * Sets the current poster image URL and updates the poster image DOMElement with the
@@ -120,7 +115,7 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
     *
     * @param poster {string} a URL for a poster image
     */
-   updatePoster: function(poster) {
+   updatePoster(poster) {
       var posterImageEl = this._findPosterImageEl();
 
       this._poster = poster ? poster : null;
@@ -131,23 +126,23 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
          posterImageEl.removeAttribute('src');
          posterImageEl.classList.add('vjs-tech-chromecast-poster-img-empty');
       }
-   },
+   }
 
    /**
     * Gets the current poster image URL.
     *
     * @returns {string} the URL for th current poster image
     */
-   getPoster: function() {
+   getPoster() {
       return this._poster;
-   },
+   }
 
    /**
     * Sets the current title and updates the title's DOMElement with the new text.
     *
     * @param title {string} a title to show
     */
-   updateTitle: function(title) {
+   updateTitle(title) {
       var titleEl = this._findTitleEl();
 
       this._title = title;
@@ -157,14 +152,14 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
       } else {
          titleEl.classList.add('vjs-tech-chromecast-title-empty');
       }
-   },
+   }
 
    /**
     * Sets the current image and updates the image's DOMElement with the new image.
     *
     * @param imageUrl {string} a imageUrl to show
     */
-   updateCoverImage: function(imageUrl) {
+   updateCoverImage(imageUrl) {
       var imageEl = this._findImageEl();
 
       if (imageUrl) {
@@ -172,14 +167,14 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
       } else {
          imageEl.style="width: 100%; height: 100%; position: absolute; background: black;";
       }
-   },
+   }
 
    /**
     * Sets the current subtitle and updates the subtitle's DOMElement with the new text.
     *
     * @param subtitle {string} a subtitle to show
     */
-   updateSubtitle: function(subtitle) {
+   updateSubtitle(subtitle) {
       var subtitleEl = this._findSubtitleEl();
 
       this._subtitle = subtitle;
@@ -189,7 +184,7 @@ ChromecastTechUI = Class.extend(/** @lends ChromecastTechUI.prototype */ {
       } else {
          subtitleEl.classList.add('vjs-tech-chromecast-subtitle-empty');
       }
-   },
-});
+   }
+}
 
 module.exports = ChromecastTechUI;

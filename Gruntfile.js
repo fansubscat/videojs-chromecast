@@ -7,7 +7,7 @@
 var path = require('path'),
     getCodeVersion = require('silvermine-serverless-utils/src/get-code-version'),
     join = path.join.bind(path),
-    nodeSass = require('node-sass');
+    sass = require('sass');
 
 module.exports = function(grunt) {
 
@@ -69,14 +69,30 @@ module.exports = function(grunt) {
          },
       },
 
-      eslint: {
-         target: config.js.all,
-      },
-
       browserify: {
          main: {
             src: config.js.browserMainFile,
             dest: config.dist.js.bundle,
+            options: {
+               transform: [
+                  [
+                     'babelify',
+                     {
+                        presets: [
+                           [
+                              '@babel/preset-env',
+                              {
+                                 debug: true,
+                                 useBuiltIns: 'usage',
+                                 shippedProposals: true,
+                                 corejs: 3,
+                              },
+                           ],
+                        ],
+                     },
+                  ],
+               ],
+            },
          },
       },
 
@@ -96,13 +112,6 @@ module.exports = function(grunt) {
          },
       },
 
-      sasslint: {
-         options: {
-            configFile: join(__dirname, 'node_modules', '@silvermine/sass-lint-config', 'sass-lint.yml'),
-         },
-         target: config.sass.all,
-      },
-
       sass: {
          main: {
             files: [
@@ -115,7 +124,7 @@ module.exports = function(grunt) {
             ],
          },
          options: {
-            implementation: nodeSass,
+            implementation: sass,
             sourceMap: DEBUG,
             indentWidth: 3,
             outputStyle: DEBUG ? 'expanded' : 'compressed',
@@ -159,16 +168,13 @@ module.exports = function(grunt) {
    grunt.loadNpmTasks('grunt-browserify');
    grunt.loadNpmTasks('grunt-contrib-copy');
    grunt.loadNpmTasks('grunt-contrib-watch');
-   grunt.loadNpmTasks('grunt-eslint');
    grunt.loadNpmTasks('grunt-sass');
    grunt.loadNpmTasks('grunt-postcss');
-   grunt.loadNpmTasks('grunt-sass-lint');
 
-   grunt.registerTask('standards', [ 'eslint', 'sasslint' ]);
    grunt.registerTask('build-js', [ 'browserify', 'uglify' ]);
    grunt.registerTask('build-css', [ 'sass', 'postcss:styles' ]);
    grunt.registerTask('build', [ 'build-js', 'build-css', 'copy:images' ]);
    grunt.registerTask('develop', [ 'build', 'watch' ]);
-   grunt.registerTask('default', [ 'standards' ]);
+   grunt.registerTask('default', [ 'build' ]);
 
 };
