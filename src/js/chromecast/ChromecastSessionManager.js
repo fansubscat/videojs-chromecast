@@ -90,6 +90,7 @@ class ChromecastSessionManager {
                   showAlert("No es pot emetre", "Aquest vídeo no es pot emetre.");
                }
                cast.framework.CastContext.getInstance().endCurrentSession(true);
+               window.player.pause();
                return;
             }
             window.player.trigger('chromecastConnected');
