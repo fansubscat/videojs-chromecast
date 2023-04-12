@@ -76,15 +76,17 @@ class ChromecastSessionManager {
     */
    _onSessionStateChange(event) {
       if (event.sessionState === cast.framework.SessionState.SESSION_ENDED) {
-         if (window.player && window.currentMethod!='mega' && window.currentMethod!='youtube') {
+         if (window.player) {
             window.player.trigger('chromecastDisconnected');
-            this._reloadTech();
+            if (window.currentSourceData.method!='mega') {
+               this._reloadTech();
+            }
          }
       } else if (event.sessionState === cast.framework.SessionState.SESSION_STARTED || event.sessionState === cast.framework.SessionState.SESSION_RESUMED) {
          if (window.player) {
-            if (!window.player.currentSource() || window.currentMethod=='mega' || window.currentMethod=='youtube') {
+            if (!window.player.currentSource() || window.currentSourceData.method=='mega') {
                // Do not cast if there is no media item loaded in the player
-               if (window.currentMethod=='mega') {
+               if (window.currentSourceData.method=='mega') {
                   showAlert("No es pot emetre", "Els vídeos acabats de penjar estan allotjats a MEGA i no es poden emetre. Si vols emetre'l, caldrà que esperis un parell d'hores i refresquis la pàgina.");
                } else {
                   showAlert("No es pot emetre", "Aquest vídeo no es pot emetre.");

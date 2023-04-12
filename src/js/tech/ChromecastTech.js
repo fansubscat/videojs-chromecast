@@ -107,10 +107,6 @@ module.exports = function(videojs) {
        * @see {@link http://docs.videojs.com/Player.html#play}
        */
       play() {
-         if ($('.vjs-ended').length>0) { //UGLY HACK
-            this._playSource({ src: this.videojsPlayer.src() }, 0);
-            return;
-         }
          if (!this.paused()) {
             return;
          }
@@ -310,6 +306,12 @@ module.exports = function(videojs) {
        * @see {@link http://docs.videojs.com/Tech.html#setCurrentTime}
        */
       setCurrentTime(time) {
+         if (this.ended()) {
+            this._playSource({
+               src: this.videojsPlayer.src()
+            }, time);
+            return;
+         }
          var duration = this.duration();
 
          if (time > duration || !this._remotePlayer.canSeek) {
@@ -357,7 +359,7 @@ module.exports = function(videojs) {
          if (!this._hasPlayedAnyItem) {
             return this._initialStartTime;
          }
-         return this._remotePlayer.currentTime;
+         return this.ended() ? this.duration() : this._remotePlayer.currentTime;
       }
 
       /**
@@ -379,7 +381,7 @@ module.exports = function(videojs) {
          if (!this._hasPlayedAnyItem) {
             return this.videojsPlayer.duration();
          }
-         return this._remotePlayer.duration;
+         return window.currentSourceData.length ? window.currentSourceData.length : this._remotePlayer.duration;
       }
 
       /**
@@ -393,7 +395,7 @@ module.exports = function(videojs) {
       ended() {
          var mediaSession = this._getMediaSession();
 
-         if (!mediaSession && this._hasMediaSessionEnded) {
+         if ($('.vjs-ended').length>0 || (!mediaSession && this._hasMediaSessionEnded)) {
             return true;
          }
 
@@ -740,6 +742,7 @@ module.exports = function(videojs) {
          } else if ((playerState === states.IDLE && this.ended()) || (playerState === null && this._hasPlayedCurrentItem)) {
             this._hasPlayedCurrentItem = false;
             //this._closeSessionOnTimeout();
+            this.trigger('paused');
             this.trigger('ended');
             this._triggerTimeUpdateEvent();
          } else if (playerState === states.BUFFERING) {
